@@ -37,6 +37,7 @@ result = pd.DataFrame()
 
 driver.implicitly_wait(10)
 
+driver.get("")
 driver.maximize_window() # 창 최대크기로
 
 
@@ -47,38 +48,47 @@ time.sleep(0.001)
 Daegu = driver.find_element_by_xpath('//*[@id="p143"]/a/img').click()
 time.sleep(0.001)
 driver.switch_to.frame('sub')
-Daegu_west = driver.find_element_by_xpath('//*[@id="i846"]/a/img').click() 
+Daegu_west = driver.find_element_by_xpath('//*[@id="i846"]/a/img').click()
 time.sleep(0.001)
 driver.switch_to.default_content()
 time.sleep(1)
-day = driver.find_element_by_xpath('//*[@id="datecal2"]').clear() #날짜 초기화하고
+day = driver.find_element_by_xpath('//*[@id="datecal2"]').clear()
 time.sleep(0.8)
 day2 = driver.find_element_by_xpath('//*[@id="datecal2"]').send_keys('')
 time.sleep(0.5)
 
-time.sleep(0.5)
-select_button = driver.find_element_by_xpath('//*[@id="frm"]/table/tbody/tr/td[2]/input').click()
+select_button = driver.find_element_by_xpath('//*[@id="frm"]/table/tbody/tr/td[2]/input').click() 
 
 cnt = 0
-import re
+start = time.time()
 while True:
-    driver.switch_to.frame('disp')
-    time.sleep(0.1)
-    driver.switch_to.frame('body')
-    html = driver.page_source
-    soup = BeautifulSoup(html,'html.parser')
-    temp = soup.select('table')
-    p = parser.make2d(temp[1])
-    df = pd.DataFrame(p[1:],columns =p[0])
-    result = pd.concat([result,df])
-    print(result)
-    driver.switch_to.default_content()
-    driver.switch_to.frame('menu')
-    min60 = driver.find_element_by_xpath('//*[@id="area00"]/li[2]/a')
-    driver.execute_script("arguments[0].click();", min60)
-    time.sleep(0.02)
-    driver.switch_to.default_content()
-    print(cnt)
-    cnt += 1
+    try:
+        driver.switch_to.frame('disp')
+        time.sleep(0.1)
+        driver.switch_to.frame('body')
+        html = driver.page_source
+        soup = BeautifulSoup(html,'html.parser')
+        temp = soup.select('table')
+        p = parser.make2d(temp[1])
+        df = pd.DataFrame(p[1:],columns =p[0])
+        s = soup.select('body > span')
+        df['날짜'] = re.search('[0-9]+\.[0-9]+\.[0-9]+', s[0].text).group()
+        result = pd.concat([result,df])
+        driver.switch_to.default_content()
+        driver.switch_to.frame('menu')
+        min60 = driver.find_element_by_xpath('//*[@id="area00"]/li[2]/a')
+        driver.execute_script("arguments[0].click();", min60)
+        time.sleep(0.02)
+        driver.switch_to.default_content()
+        time.sleep(0.003)
+        if cnt % 10 == 0:
+            print('횟수 : ',cnt, '걸린시간 : ', (time.time() - start) / 60," 분", (time.time() - start) % 60, " 초")
+            print()
+        if cnt == 150:
+            break
+        cnt += 1
+    except:
+        break
 
-result.to_csv('helloworld.csv',index = False, encoding="utf-8-sig")
+result.to_csv('crawlin4-1-10.csv',index = False, encoding="utf-8-sig")
+print('종료')
